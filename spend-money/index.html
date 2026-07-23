@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spend Their Billions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#F7F3E8;
+    --ink-hi:#FFFFFF;
+    --bill:#1F8A5A;
+    --bright-green:#16C463;
+    --gold:#B8860B;
+    --paper:#FFFFFF;
+    --paper-dim:#EFE7D0;
+    --stamp:#C23B30;
+    --text:#241F16;
+    --muted:#6B6558;
+    --line:#DED4B8;
+    --ink-text:#241F16;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--ink);color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle at 1px 1px, rgba(0,0,0,.035) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+
+  /* MONEY BAR — the only sticky element, shows just the number, styled distinctly */
+  .money-bar{
+    position:sticky;top:0;z-index:20;
+    background:var(--text);
+    padding:16px 24px;
+    text-align:center;
+    box-shadow:0 10px 24px -12px rgba(0,0,0,.4);
+  }
+  .money-bar #amountBox{
+    font-family:'Courier Prime',monospace;font-weight:800;
+    color:var(--ink-hi);
+    display:inline-block;
+    transition:transform .1s ease, color .1s ease;
+  }
+  .money-bar #amountBox.flash{transform:scale(1.08);color:var(--stamp);}
+  .money-bar #amountBox.flash-green{transform:scale(1.1);color:var(--bright-green);}
+
+  .currency-row{max-width:1040px;margin:0 auto;padding:0 24px;display:flex;justify-content:flex-end;}
+  .currency-select{
+    font-family:'Courier Prime',monospace;font-size:.72rem;font-weight:700;
+    background:var(--paper-dim);border:1px solid var(--line);border-radius:20px;
+    padding:5px 10px;color:var(--text);cursor:pointer;margin-bottom:6px;
+  }
+
+  .picker-label{
+    max-width:1040px;margin:0 auto;padding:0 24px 4px;
+    font-family:'Big Shoulders Display',sans-serif;font-weight:700;
+    font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  }
+  .picker-strip{
+    max-width:1040px;margin:0 auto;padding:0 24px;
+    display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;
+  }
+  .id-chip{
+    flex:0 0 auto;
+    display:flex;align-items:center;gap:9px;
+    background:var(--ink-hi);border:1.5px solid var(--line);
+    border-radius:14px;padding:8px 14px 8px 8px;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.05);
+    transition:.15s;
+  }
+  .id-chip:hover{border-color:var(--gold);box-shadow:0 4px 10px rgba(0,0,0,.08);}
+  .id-chip.active{
+    border-color:var(--gold);background:var(--paper-dim);
+    box-shadow:0 0 0 1.5px var(--gold) inset, 0 4px 10px rgba(184,134,11,.15);
+    animation:chipPop .3s ease;
+  }
+  @keyframes chipPop{
+    0%{transform:scale(1);}
+    45%{transform:scale(1.06);}
+    100%{transform:scale(1);}
+  }
+  .id-avatar{
+    width:52px;height:52px;border-radius:50%;flex-shrink:0;position:relative;
+    padding:2.5px;
+    background:conic-gradient(var(--gold) calc(var(--pct,100)*1%), var(--line) 0);
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+    transition:background .4s ease;
+  }
+  .id-avatar-inner{
+    width:100%;height:100%;border-radius:50%;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;background:var(--ink);
+  }
+  .avatar-fallback{width:100%;height:100%;align-items:center;justify-content:center;font-size:1.3rem;}
+  .id-chip:active{transform:scale(.96);}
+  .id-chip .id-name{font-size:.88rem;font-weight:700;white-space:nowrap;}
+  .id-chip .id-worth{font-family:'Courier Prime',monospace;font-size:.72rem;font-weight:700;color:var(--gold);white-space:nowrap;}
+
+
+  .float-gain{
+    position:absolute;top:2px;right:24px;
+    font-weight:700;font-family:'Courier Prime',monospace;
+    font-size:.85rem;pointer-events:none;animation:floatUp .55s ease-out forwards;
+  }
+  @keyframes floatUp{
+    0%{transform:translateY(0);opacity:1;}
+    100%{transform:translateY(-26px);opacity:0;}
+  }
+  @keyframes confettiFall{
+    0%{transform:translate(0,0) rotate(0deg);opacity:1;}
+    100%{transform:translate(var(--drift,0), 110vh) rotate(540deg);opacity:.25;}
+  }
+
+  /* SHOP */
+  .section{max-width:1040px;margin:0 auto;padding:0 14px;position:relative;z-index:1;}
+  .section-title{
+    font-family:'Big Shoulders Display',sans-serif;font-weight:700;
+    font-size:1.3rem;text-transform:uppercase;letter-spacing:.03em;
+    margin:22px 0 2px;color:var(--gold);
+  }
+  .section-hint{font-size:.76rem;color:var(--muted);margin-bottom:14px;}
+  .shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .item{
+    background:var(--ink-hi);border:1px solid var(--line);border-radius:14px;
+    padding:16px 12px;display:flex;flex-direction:column;gap:8px;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+    transition:.15s;
+  }
+  .item:hover{border-color:var(--gold);transform:translateY(-2px);}
+  .item:active{transform:scale(.96);}
+  .item.locked{opacity:.45;}
+  .item.locked:hover{transform:none;border-color:var(--line);}
+  .item .emoji{font-size:2.3rem;text-align:center;transition:transform .2s ease;}
+  .item:hover .emoji{transform:rotate(-8deg) scale(1.12);}
+  .item .item-name{font-weight:800;font-size:.92rem;padding:0 2px;line-height:1.25;}
+  .item .item-price{font-family:'Courier Prime',monospace;font-size:.8rem;color:var(--bill);padding:0 2px;}
+  .buy-sell-row{display:flex;align-items:stretch;gap:6px;margin-top:8px;}
+  .qty-col{
+    flex:1;
+    background:var(--ink-hi);border:1.5px solid var(--line);border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    padding:0 4px;
+    transition:border-color .15s ease;
+  }
+  .qty-col:focus-within{border-color:var(--gold);}
+  .qty-input{
+    width:100%;min-width:0;background:transparent;border:none;outline:none;
+    font-family:'Courier Prime',monospace;font-weight:700;font-size:.9rem;
+    text-align:center;color:var(--text);padding:13px 0;
+    -moz-appearance:textfield;
+  }
+  .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
+  }
+  .qty-input.bump{animation:bump .3s ease;}
+  .sell-btn, .buy-btn{
+    flex:1;padding:13px 4px;border-radius:6px;
+    font-size:.82rem;font-weight:700;
+    cursor:pointer;border:none;
+    transition:transform .08s ease, background .1s ease;
+  }
+  .sell-btn{background:var(--paper-dim);color:var(--text);border:1.5px solid var(--line);}
+  .sell-btn:hover{background:var(--line);}
+  .sell-btn:active{transform:scale(.94);}
+  .buy-btn{background:var(--gold);color:#1a1305;}
+  .buy-btn:hover{background:#c99a1f;}
+  .buy-btn:active{transform:scale(.94);}
+  .sell-btn:disabled, .buy-btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;}
+  @keyframes bump{
+    0%{transform:scale(1);}
+    45%{transform:scale(1.5);color:var(--gold);}
+    100%{transform:scale(1);}
+  }
+
+  .item.enter{animation:itemEnter .35s ease both;}
+  @keyframes itemEnter{
+    0%{opacity:0;transform:translateY(8px) scale(.95);}
+    100%{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  /* RECEIPT */
+  .receipt-wrap{max-width:420px;margin:40px auto 0;position:relative;z-index:1;padding:0 24px;}
+  .receipt{
+    background:var(--paper);color:#2a2515;
+    font-family:'Courier Prime',monospace;font-size:.82rem;
+    padding:22px 20px 26px;
+    clip-path:polygon(
+      0% 8px, 4% 0%, 8% 8px, 12% 0%, 16% 8px, 20% 0%, 24% 8px, 28% 0%, 32% 8px, 36% 0%, 40% 8px, 44% 0%, 48% 8px, 52% 0%, 56% 8px, 60% 0%, 64% 8px, 68% 0%, 72% 8px, 76% 0%, 80% 8px, 84% 0%, 88% 8px, 92% 0%, 96% 8px, 100% 0%,
+      100% calc(100% - 8px), 96% 100%, 92% calc(100% - 8px), 88% 100%, 84% calc(100% - 8px), 80% 100%, 76% calc(100% - 8px), 72% 100%, 68% calc(100% - 8px), 64% 100%, 60% calc(100% - 8px), 56% 100%, 52% calc(100% - 8px), 48% 100%, 44% calc(100% - 8px), 40% 100%, 36% calc(100% - 8px), 32% 100%, 28% calc(100% - 8px), 24% 100%, 20% calc(100% - 8px), 16% 100%, 12% calc(100% - 8px), 8% 100%, 4% calc(100% - 8px), 0% 100%
+    );
+    box-shadow:0 20px 50px -18px rgba(0,0,0,.55);
+  }
+  .receipt-head{text-align:center;border-bottom:1px dashed #a89c72;padding-bottom:10px;margin-bottom:10px;}
+  .receipt-head .store{font-weight:700;font-size:1rem;letter-spacing:.05em;}
+  .receipt-head .sub{font-size:.7rem;color:#7a7050;margin-top:3px;}
+  .rline{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:.78rem;}
+  .rline .rname{max-width:65%;}
+  .rtotal{
+    border-top:1px dashed #a89c72;margin-top:10px;padding-top:10px;
+    display:flex;justify-content:space-between;font-weight:700;font-size:.88rem;
+  }
+  .receipt-empty{text-align:center;color:#8a8058;font-style:italic;padding:14px 0;font-size:.8rem;}
+  .receipt-foot{text-align:center;margin-top:14px;font-size:.68rem;color:#8a8058;}
+
+  .reset-btn{
+    display:block;margin:24px auto 0;background:none;border:1px solid var(--line);color:var(--muted);
+    padding:9px 18px;border-radius:8px;font-size:.8rem;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--stamp);color:var(--stamp);}
+  .reset-btn:active{transform:scale(.96);}
+
+  footer{
+    max-width:1040px;margin:40px auto 0;padding:24px 24px 60px;
+    color:var(--muted);font-size:.76rem;line-height:1.6;border-top:1px solid var(--line);
+    position:relative;z-index:1;
+  }
+
+  /* TOAST — milestone celebrations */
+  .toast{
+    position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-16px);
+    background:var(--text);color:var(--ink-hi);padding:10px 20px;border-radius:30px;
+    font-weight:600;font-size:.85rem;opacity:0;pointer-events:none;z-index:50;
+    transition:opacity .25s, transform .25s;box-shadow:0 10px 30px rgba(0,0,0,.35);
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  button:focus-visible, .id-chip:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  /* DESKTOP ONLY — wider screens get a roomier 3-column shop grid with bigger
+     cards. Nothing below this breakpoint changes, so phones look exactly
+     the same as before. */
+  @media (min-width: 720px){
+    .currency-row, .picker-strip, .section{max-width:1280px;}
+    .shop-grid{grid-template-columns:repeat(3,1fr);gap:18px;}
+    .item{padding:20px 16px;}
+    .item .emoji{font-size:3rem;}
+    .item .item-name{font-size:1.05rem;}
+    .item .item-price{font-size:.9rem;}
+    .sell-btn, .buy-btn{padding:15px 6px;font-size:.85rem;}
+    .qty-input{font-size:1rem;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="currency-row">
+  <select id="currencySelect" class="currency-select" onchange="changeCurrency(this.value)">
+    <option value="USD">$ USD</option>
+    <option value="INR">₹ INR</option>
+    <option value="EUR">€ EUR</option>
+    <option value="GBP">£ GBP</option>
+    <option value="JPY">¥ JPY</option>
+    <option value="AED">AED</option>
+  </select>
+</div>
+<div class="picker-label">👤 Pick someone</div>
+<div class="picker-strip" id="pickerStrip"></div>
+
+<div class="money-bar" id="amountRow">
+  <span id="amountBox">$0</span>
+</div>
+
+<div class="section">
+  <div class="section-title">🛍️ Buy stuff</div>
+  <div class="section-hint">Greyed out = can't afford it yet</div>
+  <div class="shop-grid" id="shopGrid"></div>
+</div>
+
+<div class="receipt-wrap">
+  <div class="receipt">
+    <div class="receipt-head">
+      <div class="store">YOUR RECEIPT</div>
+      <div class="sub">what you bought</div>
+    </div>
+    <div id="receiptLines"><div class="receipt-empty">you haven't bought anything yet</div></div>
+    <div class="rtotal" id="receiptTotal" style="display:none;">
+      <span>TOTAL</span><span id="receiptTotalAmt"></span>
+    </div>
+    <div class="receipt-foot">just for fun — not real shopping</div>
+  </div>
+  <button class="reset-btn" onclick="resetPerson()">↺ start over</button>
+</div>
+
+<footer>
+  Money amounts here are rough guesses, not exact numbers. They change every day, and currency conversion is approximate too. This is just a fun game — no real money is spent.
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ---- DATA -------------------------------------------------------------
+// Avatars are a gradient circle + emoji only (no scraped celebrity photos).
+
+const people = [
+  { name:"Elon Musk", icon:"🚀", grad:["#7C2D12","#DC5A2C"], worth:839_000_000_000 },
+  { name:"Jeff Bezos", icon:"📦", grad:["#232F3E","#FF9900"], worth:224_000_000_000 },
+  { name:"Mark Zuckerberg", icon:"∞", grad:["#0064E0","#8E44E9"], worth:222_000_000_000 },
+  { name:"Bill Gates", icon:"🪟", grad:["#00A4EF","#7FBA00"], worth:108_000_000_000 },
+  { name:"Mukesh Ambani", icon:"📱", grad:["#0F4C81","#00A19A"], worth:99_000_000_000 },
+  { name:"Gautam Adani", icon:"⚓", grad:["#C0392B","#E67E22"], worth:93_000_000_000 },
+  { name:"Donald Trump", icon:"🏢", grad:["#B22234","#3C3B6E"], worth:6_500_000_000 },
+  { name:"Vladimir Putin", icon:"🐻", grad:["#0033A0","#DA291C"], worth:70_000_000_000 },
+  { name:"Narendra Modi", icon:"🪷", grad:["#FF9933","#138808"], worth:364_000 },
+];
+
+const items = [
+  { emoji:"🍔", name:"Big Mac", price:2 },
+  { emoji:"🩴", name:"Flip Flops", price:3 },
+  { emoji:"🥤", name:"Coca-Cola Pack", price:5 },
+  { emoji:"🎬", name:"Movie Ticket", price:12 },
+  { emoji:"📖", name:"Book", price:15 },
+  { emoji:"🍛", name:"Biryani Feast", price:40 },
+  { emoji:"🎮", name:"Video Game", price:60 },
+  { emoji:"🔊", name:"Smart Speaker", price:99 },
+  { emoji:"📺", name:"Year of Streaming", price:100 },
+  { emoji:"👟", name:"Designer Sneakers", price:125 },
+  { emoji:"🎧", name:"Wireless Earbuds", price:199 },
+  { emoji:"🕹️", name:"Gaming Console", price:299 },
+  { emoji:"🚁", name:"Drone", price:350 },
+  { emoji:"🚲", name:"Bicycle", price:800 },
+  { emoji:"📱", name:"iPhone 17 Pro Max", price:1200 },
+  { emoji:"🐱", name:"Kitten", price:1500 },
+  { emoji:"🐶", name:"Puppy", price:1500 },
+  { emoji:"🛺", name:"Auto Rickshaw", price:2300 },
+  { emoji:"🐴", name:"Horse", price:2500 },
+  { emoji:"🌾", name:"Acre of Farmland", price:3000 },
+  { emoji:"👜", name:"Designer Handbag", price:5500 },
+  { emoji:"🏊", name:"Swimming Pool", price:6000 },
+  { emoji:"📿", name:"Gold Necklace", price:7000 },
+  { emoji:"💍", name:"Diamond Ring", price:10000 },
+  { emoji:"🛥️", name:"Jet Ski", price:12000 },
+  { emoji:"⌚", name:"Luxury Watch", price:15000 },
+  { emoji:"🚙", name:"SUV Car", price:35000 },
+  { emoji:"🚘", name:"BMW Car", price:55000 },
+  { emoji:"🚗", name:"Electric Car", price:75000 },
+  { emoji:"🏎️", name:"Sports Car", price:250000 },
+  { emoji:"🏡", name:"House", price:300000 },
+  { emoji:"🪙", name:"Gold Bar", price:700000 },
+  { emoji:"🍟", name:"Fast Food Franchise", price:1500000 },
+  { emoji:"📺", name:"IPL Match Ad", price:3000000 },
+  { emoji:"🛥️", name:"Yacht", price:7500000 },
+  { emoji:"🛩️", name:"Fighter Jet", price:8000000 },
+  { emoji:"🏎️", name:"Formula 1 Car", price:15000000 },
+  { emoji:"🎥", name:"Bollywood Movie", price:30000000 },
+  { emoji:"🏰", name:"Luxury Bungalow", price:45000000 },
+  { emoji:"🚀", name:"ISRO Rocket Launch", price:62000000 },
+  { emoji:"✈️", name:"Private Jet", price:75000000 },
+  { emoji:"🚢", name:"Submarine", price:90000000 },
+  { emoji:"🏝️", name:"Private Island", price:100000000 },
+  { emoji:"🖼️", name:"Famous Painting", price:780000000 },
+  { emoji:"🏙️", name:"Skyscraper", price:850000000 },
+  { emoji:"🚢", name:"Cruise Ship", price:930000000 },
+  { emoji:"🏏", name:"IPL Cricket Team", price:1500000000 },
+  { emoji:"🛫", name:"Airline Company", price:2000000000 },
+];
+
+// ---- STATE --------------------------------------------------------------
+let currentPerson = 0;
+const spent = people.map(() => 0);
+const counts = people.map(() => items.map(() => 0));
+const lastMilestone = people.map(() => 0);
+const milestoneMsg = {25:"Getting started! 🔥", 50:"Halfway there! 🎉", 75:"Almost broke! 😅", 100:"Fortune's all gone! 🎊"};
+let animateGridNext = false;
+let lastActedIndex = -1;
+
+// ---- CURRENCY ---------------------------------------------------------
+// All internal numbers (worth, prices, spent) stay in USD. Only display
+// formatting converts, so the game logic never has to change.
+const currencies = {
+  USD:{symbol:'$', rate:1},
+  INR:{symbol:'₹', rate:83},
+  EUR:{symbol:'€', rate:0.92},
+  GBP:{symbol:'£', rate:0.79},
+  JPY:{symbol:'¥', rate:150},
+  AED:{symbol:'AED ', rate:3.67},
+};
+let currentCurrency = 'USD';
+function changeCurrency(code){
+  currentCurrency = code;
+  renderAll();
+}
+function toCurrency(usd){
+  return usd * currencies[currentCurrency].rate;
+}
+
+// ---- HELPERS --------------------------------------------------------------
+function remaining(i){ return Math.max(0, people[i].worth - spent[i]); }
+function formatMoney(usd){
+  const sym = currencies[currentCurrency].symbol;
+  const n = Math.max(0, Math.round(toCurrency(usd)));
+  const locale = currentCurrency === 'INR' ? 'en-IN' : 'en-US';
+  return sym + n.toLocaleString(locale);
+}
+function formatMoneyShort(usd){
+  const sym = currencies[currentCurrency].symbol;
+  const n = Math.max(0, toCurrency(usd));
+  if(currentCurrency === 'INR'){
+    if(n >= 1e12) return sym + Math.round(n/1e12) + ' Lakh Cr';
+    if(n >= 1e7) return sym + Math.round(n/1e7) + ' Cr';
+    if(n >= 1e5) return sym + Math.round(n/1e5) + ' L';
+    return sym + Math.round(n).toLocaleString('en-IN');
+  }
+  if(n >= 1e9) return sym + Math.round(n/1e9) + 'B';
+  if(n >= 1e6) return sym + Math.round(n/1e6) + 'M';
+  if(n >= 1e3) return sym + Math.round(n/1e3) + 'K';
+  return sym + Math.round(n);
+}
+function avatarSpan(p){
+  return `<span class="avatar-fallback" style="display:flex;background:linear-gradient(135deg, ${p.grad[0]}, ${p.grad[1]});">${p.icon}</span>`;
+}
+
+// ---- SOUND (synthesised, no audio files needed) ---------------------------
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playChime(freqs){
+  try{
+    const ctx = getAudioCtx();
+    const t0 = ctx.currentTime;
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = t0 + i*0.06;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.15, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + 0.22);
+    });
+  } catch(e){ /* audio unavailable, ignore */ }
+}
+function playCoinSound(){ playChime([880, 1320]); }
+function playSellSound(){ playChime([660, 440]); }
+
+// ---- TOAST ----------------------------------------------------------------
+let toastTimer;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 1800);
+}
+function checkMilestone(i){
+  const p = people[i];
+  const pct = (spent[i] / p.worth) * 100;
+  [25,50,75,100].forEach(m=>{
+    if(pct >= m && lastMilestone[i] < m){
+      lastMilestone[i] = m;
+      showToast(milestoneMsg[m]);
+      if(m === 100) fireConfetti();
+    }
+  });
+}
+
+function fireConfetti(){
+  const colors = ['#1F8A5A', '#B8860B', '#C23B30', '#241F16', '#FFFFFF'];
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden;';
+  document.body.appendChild(container);
+  for(let i=0;i<70;i++){
+    const piece = document.createElement('div');
+    const size = 6 + Math.random()*6;
+    const drift = (Math.random()-0.5)*220;
+    const duration = (1.8 + Math.random()*1.4).toFixed(2);
+    const delay = (Math.random()*0.35).toFixed(2);
+    piece.style.cssText = `
+      position:absolute;left:${Math.random()*100}vw;top:-20px;
+      width:${size}px;height:${size*0.6}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      opacity:.9;border-radius:2px;
+      --drift:${drift}px;
+      animation:confettiFall ${duration}s ease-in ${delay}s forwards;
+    `;
+    container.appendChild(piece);
+  }
+  setTimeout(()=> container.remove(), 3600);
+}
+
+// ---- RENDER ----------------------------------------------------------------
+function renderPicker(){
+  const strip = document.getElementById('pickerStrip');
+  strip.innerHTML = people.map((p,i)=>{
+    const pct = p.worth>0 ? (remaining(i)/p.worth*100) : 0;
+    return `
+    <div class="id-chip ${i===currentPerson?'active':''}" onclick="selectPerson(${i})">
+      <div class="id-avatar" style="--pct:${pct}"><div class="id-avatar-inner">${avatarSpan(p)}</div></div>
+      <div>
+        <div class="id-name">${p.name}</div>
+        <div class="id-worth">${formatMoneyShort(remaining(i))}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBalance(){
+  const p = people[currentPerson];
+  const rem = remaining(currentPerson);
+
+  const box = document.getElementById('amountBox');
+  const full = formatMoney(rem);
+  box.textContent = full;
+  const len = full.length;
+  box.style.fontSize = len > 20 ? '1.05rem' : len > 16 ? '1.25rem' : len > 12 ? '1.5rem' : '1.7rem';
+}
+
+function renderShop(){
+  const grid = document.getElementById('shopGrid');
+  const rem = remaining(currentPerson);
+  grid.innerHTML = items.map((item,i)=>{
+    const owned = counts[currentPerson][i];
+    const canBuy = item.price <= rem;
+    const enterCls = animateGridNext ? 'enter' : '';
+    const enterStyle = animateGridNext ? `style="animation-delay:${Math.min(i*12,260)}ms"` : '';
+    const lockedCls = (!canBuy && owned<=0) ? 'locked' : '';
+    return `
+    <div class="item ${enterCls} ${lockedCls}" data-index="${i}" ${enterStyle}>
+      <div class="emoji">${item.emoji}</div>
+      <div class="item-name">${item.name}</div>
+      <div class="item-price">${formatMoney(item.price)}</div>
+      <div class="buy-sell-row">
+        <button class="sell-btn" onclick="sellItem(${i})" ${owned<=0?'disabled':''}>Sell</button>
+        <div class="qty-col"><input type="text" inputmode="decimal" autocomplete="off" class="qty-input" value="${formatQtyShort(owned)}" oninput="liveQtyInput(${i}, this)" onchange="setQty(${i}, this.value)" onclick="this.select()"></div>
+        <button class="buy-btn" onclick="buyItem(${i})" ${!canBuy?'disabled':''}>Buy</button>
+      </div>
+    </div>`;
+  }).join('');
+  animateGridNext = false;
+  lastActedIndex = -1;
+}
+
+// Lightweight update used after a buy/sell/setQty — patches just the bits
+// that changed instead of rebuilding all 48 cards, so it feels instant.
+function updateShopState(){
+  const rem = remaining(currentPerson);
+  const cards = document.querySelectorAll('#shopGrid .item');
+  cards.forEach((card) => {
+    const i = Number(card.dataset.index);
+    const item = items[i];
+    const owned = counts[currentPerson][i];
+    const canBuy = item.price <= rem;
+
+    card.classList.toggle('locked', !canBuy && owned<=0);
+    const buyBtn = card.querySelector('.buy-btn');
+    const sellBtn = card.querySelector('.sell-btn');
+    const qtyInput = card.querySelector('.qty-input');
+    buyBtn.disabled = !canBuy;
+    sellBtn.disabled = owned <= 0;
+    if(document.activeElement !== qtyInput){
+      qtyInput.value = formatQtyShort(owned);
+    }
+    if(i === lastActedIndex){
+      qtyInput.classList.add('bump');
+      setTimeout(()=> qtyInput.classList.remove('bump'), 300);
+    }
+  });
+  lastActedIndex = -1;
+}
+
+function renderReceipt(){
+  const linesEl = document.getElementById('receiptLines');
+  const totalEl = document.getElementById('receiptTotal');
+  const totalAmtEl = document.getElementById('receiptTotalAmt');
+
+  const owned = items.map((item,i)=>({item, qty:counts[currentPerson][i]})).filter(x=>x.qty>0);
+
+  if(owned.length === 0){
+    linesEl.innerHTML = '<div class="receipt-empty">you haven\'t bought anything yet</div>';
+    totalEl.style.display = 'none';
+    return;
+  }
+
+  linesEl.innerHTML = owned.map(({item,qty})=>`
+    <div class="rline">
+      <span class="rname">${item.emoji} ${item.name} ×${qty}</span>
+      <span>${formatMoney(item.price*qty)}</span>
+    </div>
+  `).join('');
+
+  const total = owned.reduce((sum,{item,qty})=>sum+item.price*qty, 0);
+  totalEl.style.display = 'flex';
+  totalAmtEl.textContent = formatMoney(total);
+}
+
+function renderAll(){
+  renderPicker();
+  renderBalance();
+  renderShop();
+  renderReceipt();
+}
+
+function quickUpdate(){
+  renderPicker();
+  renderBalance();
+  updateShopState();
+  renderReceipt();
+}
+
+function flashAmount(cls){
+  const box = document.getElementById('amountBox');
+  box.classList.add(cls);
+  setTimeout(()=>box.classList.remove(cls), 220);
+}
+
+function spawnFloat(text, color){
+  const row = document.getElementById('amountRow');
+  const span = document.createElement('span');
+  span.className = 'float-gain';
+  span.style.color = color;
+  span.textContent = text;
+  row.appendChild(span);
+  setTimeout(()=> span.remove(), 650);
+}
+
+// ---- ACTIONS ----------------------------------------------------------------
+function selectPerson(i){
+  currentPerson = i;
+  animateGridNext = true;
+  renderAll();
+}
+
+let qtyJustSetIndex = -1;
+let qtyJustSetTick = 0;
+
+function buyItem(i){
+  if(qtyJustSetIndex === i && (performance.now() - qtyJustSetTick) < 400){
+    qtyJustSetIndex = -1;
+    return;
+  }
+  const item = items[i];
+  const rem = remaining(currentPerson);
+  if(item.price > rem) return;
+  spent[currentPerson] += item.price;
+  counts[currentPerson][i]++;
+  lastActedIndex = i;
+  flashAmount('flash');
+  spawnFloat('−' + formatMoney(item.price), 'var(--stamp)');
+  playCoinSound();
+  checkMilestone(currentPerson);
+  quickUpdate();
+}
+
+function sellItem(i){
+  if(qtyJustSetIndex === i && (performance.now() - qtyJustSetTick) < 400){
+    qtyJustSetIndex = -1;
+    return;
+  }
+  if(counts[currentPerson][i] <= 0) return;
+  counts[currentPerson][i]--;
+  spent[currentPerson] -= items[i].price;
+  lastActedIndex = i;
+  flashAmount('flash-green');
+  spawnFloat('+' + formatMoney(items[i].price), 'var(--bright-green)');
+  playSellSound();
+  quickUpdate();
+}
+
+function formatQtyShort(n){
+  n = Math.max(0, Math.round(n));
+  if(n >= 1e9) return (n % 1e9 === 0 ? n/1e9 : (n/1e9).toFixed(1)) + 'b';
+  if(n >= 1e6) return (n % 1e6 === 0 ? n/1e6 : (n/1e6).toFixed(1)) + 'm';
+  if(n >= 1e3) return (n % 1e3 === 0 ? n/1e3 : (n/1e3).toFixed(1)) + 'k';
+  return String(n);
+}
+
+function parseQtyInput(raw){
+  if(raw == null) return 0;
+  const str = String(raw).trim().toLowerCase();
+  if(str === '') return 0;
+  const match = str.match(/^([\d.]+)\s*(k|m|b)?$/);
+  if(!match) return Math.max(0, Math.round(Number(str) || 0));
+  let num = parseFloat(match[1]);
+  if(isNaN(num)) return 0;
+  if(match[2] === 'k') num *= 1e3;
+  else if(match[2] === 'm') num *= 1e6;
+  else if(match[2] === 'b') num *= 1e9;
+  return Math.max(0, Math.round(num));
+}
+
+function liveQtyInput(i, el){
+  // While typing a plain integer, once it reaches 1000+, reformat in place
+  // to the short form (1000 -> 1k) so it never overflows the box.
+  const raw = el.value;
+  if(/^\d+$/.test(raw)){
+    const num = parseInt(raw, 10);
+    if(num >= 1000){
+      el.value = formatQtyShort(num);
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }
+
+  // Live-set the quantity as you type — updates the total and every other
+  // card's affordability instantly, without playing sound/flash on each
+  // keystroke (that happens once you finish, via the change event below).
+  const item = items[i];
+  const person = currentPerson;
+  const oldQty = counts[person][i];
+  let newQty = parseQtyInput(el.value);
+  const extraAffordable = Math.floor(remaining(person) / item.price);
+  const maxQty = oldQty + extraAffordable;
+  if(newQty > maxQty) newQty = maxQty;
+  const deltaQty = newQty - oldQty;
+  if(deltaQty === 0) return;
+
+  spent[person] += deltaQty * item.price;
+  counts[person][i] = newQty;
+  renderBalance();
+  renderPicker();
+  updateShopState();
+  renderReceipt();
+}
+
+function setQty(i, rawVal){
+  qtyJustSetIndex = i;
+  qtyJustSetTick = performance.now();
+
+  const item = items[i];
+  const person = currentPerson;
+  const oldQty = counts[person][i];
+  let newQty = parseQtyInput(rawVal);
+
+  const extraAffordable = Math.floor(remaining(person) / item.price);
+  const maxQty = oldQty + extraAffordable;
+  if(newQty > maxQty) newQty = maxQty;
+
+  const deltaQty = newQty - oldQty;
+  if(deltaQty === 0){ quickUpdate(); return; }
+
+  spent[person] += deltaQty * item.price;
+  counts[person][i] = newQty;
+  lastActedIndex = i;
+
+  if(deltaQty > 0){
+    flashAmount('flash');
+    spawnFloat('−' + formatMoney(deltaQty * item.price), 'var(--stamp)');
+    playCoinSound();
+    checkMilestone(person);
+  } else {
+    flashAmount('flash-green');
+    spawnFloat('+' + formatMoney(-deltaQty * item.price), 'var(--bright-green)');
+    playSellSound();
+  }
+  quickUpdate();
+}
+
+function resetPerson(){
+  spent[currentPerson] = 0;
+  counts[currentPerson] = items.map(()=>0);
+  lastMilestone[currentPerson] = 0;
+  animateGridNext = true;
+  renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>
