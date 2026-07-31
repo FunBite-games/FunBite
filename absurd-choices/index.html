@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<title>Impossible Choices — FunBite</title>
+<meta name="description" content="Pick between two absurd options. There's no good answer.">
+<link rel="icon" type="image/png" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #FFFFFF;
+    --ink: #15131F;
+    --ink-soft: rgba(21,19,31,.62);
+    --pink: #E85DD1;
+    --pink-soft: #FDE9FA;
+    --purple: #6C3EF4;
+    --purple-soft: #ECE6FF;
+    --line: rgba(21,19,31,.08);
+  }
+  *{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, sans-serif;
+    line-height: 1.5;
+  }
+  h1, h2{ font-family: 'Baloo 2', ui-rounded, sans-serif; margin: 0; }
+  a{ color: inherit; }
+
+  .wrap{
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 22px 60px;
+  }
+
+  .back{
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink-soft);
+    padding: 6px 0;
+  }
+
+  header{
+    text-align: center;
+    padding: 14px 0 6px;
+  }
+  header h1{ font-size: clamp(28px, 8vw, 36px); }
+  .tagline{
+    margin: 8px 0 0;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  .progress{
+    text-align: center;
+    margin: 18px 0 10px;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .progress-bar{
+    height: 6px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .progress-bar > div{
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    width: 0%;
+    transition: width .3s ease;
+  }
+
+  .options{
+    display: grid;
+    gap: 14px;
+  }
+  .opt{
+    border: none;
+    text-align: left;
+    border-radius: 22px;
+    padding: 22px 20px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 12px 22px -14px rgba(21,19,31,.4);
+    transition: transform .12s ease;
+  }
+  .opt:active{ transform: scale(.97); }
+  .opt.a{ background: linear-gradient(135deg, var(--pink), #B8319F); }
+  .opt.b{ background: linear-gradient(135deg, var(--purple), #3B1FA0); }
+  .opt .or{
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    opacity: .75;
+    margin-bottom: 6px;
+  }
+
+  .vs{
+    text-align: center;
+    color: var(--ink-soft);
+    font-weight: 800;
+    font-size: 13px;
+    margin: -4px 0;
+  }
+
+  .result{
+    text-align: center;
+    padding-top: 12px;
+  }
+  .result .badge{
+    display: inline-block;
+    background: var(--purple-soft);
+    color: var(--purple);
+    font-weight: 800;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .result h2{ font-size: clamp(24px, 8vw, 30px); }
+  .result p{ color: var(--ink-soft); margin-top: 10px; font-size: 15px; }
+
+  button.primary{
+    width: 100%;
+    margin-top: 22px;
+    padding: 15px;
+    border: none;
+    border-radius: 16px;
+    background: var(--ink);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button.primary:active{ transform: translateY(1px); }
+
+  [hidden]{ display: none !important; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="../">← FunBite</a>
+
+    <header>
+      <h1>Impossible Choices</h1>
+      <p class="tagline">Would you rather... there's no good answer.</p>
+    </header>
+
+    <section id="game">
+      <div class="progress" id="progressText">Choice 1 of 16</div>
+      <div class="progress-bar"><div id="progressFill"></div></div>
+
+      <div class="options">
+        <button class="opt a" id="optA"><span class="or">Option A</span></button>
+        <div class="vs">— or —</div>
+        <button class="opt b" id="optB"><span class="or">Option B</span></button>
+      </div>
+    </section>
+
+    <section class="result" id="result" hidden>
+      <div class="badge" id="badge">Verdict</div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultDesc"></p>
+      <button class="primary" id="playAgain">Play again</button>
+    </section>
+  </div>
+
+<script>
+  // Each option carries a "chaos" weight from 1 (mild) to 3 (unhinged),
+  // just for a fun personality readout at the end — nothing serious.
+  const questions = [
+    { a: "Sneeze glitter for the rest of your life", aWeight: 3, b: "Hiccup helium bubbles whenever you're nervous", bWeight: 2 },
+    { a: "Only be able to walk backwards, forever", aWeight: 2, b: "Only be able to whisper, never talk normally", bWeight: 1 },
+    { a: "Every high-five gives a tiny static shock", aWeight: 2, b: "Every hug lasts exactly 11 seconds, no matter what", bWeight: 1 },
+    { a: "Your phone autocorrects everything to puns", aWeight: 2, b: "Your alarm only wakes you with opera singing", bWeight: 2 },
+    { a: "Taste everything as slightly like pineapple", aWeight: 1, b: "Smell everything as slightly like a new car", bWeight: 1 },
+    { a: "You can only eat food shaped like animals", aWeight: 2, b: "You can only drink through a curly straw", bWeight: 1 },
+    { a: "Your shadow is always 10 minutes ahead of you", aWeight: 3, b: "Your reflection waves before you do", bWeight: 3 },
+    { a: "Every door you open creaks dramatically", aWeight: 1, b: "Every chair you sit in makes a comedic boing", bWeight: 2 },
+    { a: "You must always speak in movie quotes", aWeight: 2, b: "You must end every sentence with 'as they say'", bWeight: 1 },
+    { a: "Your hair changes color with your mood", aWeight: 1, b: "Your fingernails grow a new pattern every night", bWeight: 2 },
+    { a: "You can teleport, but only 3 steps backwards", aWeight: 2, b: "You can fly, but only 2 inches off the ground", bWeight: 2 },
+    { a: "Every text you send arrives as a fax", aWeight: 3, b: "Every call you make echoes like a canyon", bWeight: 2 },
+    { a: "You sneeze confetti at random weddings", aWeight: 3, b: "Your yawns summon nearby pigeons", bWeight: 3 },
+    { a: "Your left shoe always unties itself", aWeight: 1, b: "Your right pocket is always slightly damp", bWeight: 1 },
+    { a: "You can only watch movies backwards", aWeight: 2, b: "You can only listen to music at double speed", bWeight: 2 },
+    { a: "Every laugh flickers a nearby lightbulb", aWeight: 2, b: "Every cry makes a nearby plant grow an inch", bWeight: 1 }
+  ];
+
+  let order = [];
+  let idx = 0;
+  let score = 0;
+  let maxScore = 0;
+
+  const gameEl = document.getElementById('game');
+  const resultEl = document.getElementById('result');
+  const optA = document.getElementById('optA');
+  const optB = document.getElementById('optB');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function render(){
+    const q = order[idx];
+    optA.innerHTML = `<span class="or">Option A</span>${q.a}`;
+    optB.innerHTML = `<span class="or">Option B</span>${q.b}`;
+    progressText.textContent = `Choice ${idx + 1} of ${order.length}`;
+    progressFill.style.width = `${(idx / order.length) * 100}%`;
+  }
+
+  function pick(weight, otherWeight){
+    score += weight;
+    maxScore += Math.max(weight, otherWeight);
+    idx++;
+    if (idx < order.length){
+      render();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult(){
+    gameEl.hidden = true;
+    resultEl.hidden = false;
+    progressFill.style.width = '100%';
+
+    const pct = Math.round((score / maxScore) * 100);
+    const titleEl = document.getElementById('resultTitle');
+    const descEl = document.getElementById('resultDesc');
+
+    if (pct < 35){
+      titleEl.textContent = "Secretly a Normal Person";
+      descEl.textContent = "You picked the calmer option almost every time. Respectable, if a little suspicious.";
+    } else if (pct < 65){
+      titleEl.textContent = "Balanced Weirdo";
+      descEl.textContent = "A healthy mix of chaos and common sense. You'd survive most of these curses just fine.";
+    } else {
+      titleEl.textContent = "Absolute Chaos Gremlin";
+      descEl.textContent = "You leaned into almost every unhinged option available. No notes.";
+    }
+  }
+
+  function startGame(){
+    order = shuffle(questions);
+    idx = 0;
+    score = 0;
+    maxScore = 0;
+    gameEl.hidden = false;
+    resultEl.hidden = true;
+    render();
+  }
+
+  optA.addEventListener('click', () => pick(order[idx].aWeight, order[idx].bWeight));
+  optB.addEventListener('click', () => pick(order[idx].bWeight, order[idx].aWeight));
+  document.getElementById('playAgain').addEventListener('click', startGame);
+
+  startGame();
+</script>
+</body>
+</html>
